@@ -27,12 +27,6 @@ io.on("connection", (socket: Socket) => {
     // Add the client to the session
     socket.join(sessionId);
     console.log(`User joined session: ${sessionId}`);
-
-    // Send the current session state to the newly joined client
-    const session = sessions.find((session) => session.id === sessionId);
-    if (session) {
-      socket.emit("currentVideoState", session.videoState);
-    }
   });
 
   socket.on("leave", (sessionId: string) => {
@@ -43,12 +37,15 @@ io.on("connection", (socket: Socket) => {
   socket.on("userPlay", (sessionId: string, timestamp: number) => {
     const session = sessions.find((session) => session.id === sessionId);
     if (session) {
+      // Update the video state
       session.videoState = {
         ...session.videoState,
         isPlaying: true,
         progress: timestamp,
       };
+      // This sends the updated video state to all clients in the session except the sender
       socket.to(sessionId).emit("play", timestamp);
+      // Send to the sender too
       socket.emit("play", timestamp);
     }
   });
@@ -56,7 +53,6 @@ io.on("connection", (socket: Socket) => {
   socket.on("userPause", (sessionId: string, timestamp: number) => {
     const session = sessions.find((session) => session.id === sessionId);
     if (session) {
-      // Update the video state
       session.videoState = {
         ...session.videoState,
         isPlaying: false,
@@ -70,11 +66,23 @@ io.on("connection", (socket: Socket) => {
   socket.on("userSeek", (sessionId: string, timestamp: number) => {
     const session = sessions.find((session) => session.id === sessionId);
     if (session) {
-      // Update the video state
       session.videoState = { ...session.videoState, progress: timestamp };
-      // Send the updated video state to all clients in the session except the sender
       socket.to(sessionId).emit("seek", timestamp);
       socket.emit("seek", timestamp);
+    }
+  });
+
+  socket.on("progress", (sessionId: string, progress: number) => {
+    const session = sessions.find((session) => session.id === sessionId);
+    if (session) {
+      session.videoState = { ...session.videoState, progress };
+    }
+  });
+
+  socket.on("startWatching", (sessionId: string) => {
+    const session = sessions.find((session) => session.id === sessionId);
+    if (session) {
+      socket.to(sessionId).emit("sync");
     }
   });
 });

@@ -60,8 +60,9 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     loaded: number;
     loadedSeconds: number;
   }) => {
-    console.log("Video progress: ", state);
+    // console.log("Video progress: ", state);
     setProgress(state.playedSeconds);
+    socket.emit("progress", sessionId, state.playedSeconds);
   };
 
   useEffect(() => {
@@ -82,12 +83,17 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
       player.current?.seekTo(time);
     });
 
+    socket.on("sync", () => {
+      handleSeek(player.current?.getCurrentTime() || 0);
+    });
+
     return () => {
       socket.off("play");
       socket.off("pause");
       socket.off("seek");
+      socket.off("sync");
     };
-  }, [socket]);
+  }, [socket, handleSeek]);
 
   return (
     <Box
@@ -140,6 +146,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
           variant="contained"
           size="large"
           onClick={() => {
+            socket.emit("startWatching", sessionId);
             setHasJoined(true);
             setIsPlaying(true);
           }}
