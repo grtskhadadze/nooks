@@ -22,6 +22,7 @@ interface VideoState {
 
 interface Session {
   id: string;
+  name: string;
   videoUrl: string;
   videoState: VideoState;
 }
@@ -30,27 +31,6 @@ let sessions: Session[] = [];
 
 io.on("connection", (socket: Socket) => {
   console.log("New client connected");
-
-  socket.on("create", (videoUrl: string) => {
-    const sessionId = uuidv4();
-
-    // Create a new session with initial video state
-    const newSession: Session = {
-      id: sessionId,
-      videoUrl: videoUrl,
-      videoState: {
-        isPlaying: false,
-        progress: 0,
-        timestamp: new Date(),
-      },
-    };
-
-    // Add the new session to the list of sessions
-    sessions.push(newSession);
-
-    // Send the ID of the new session back to the client
-    socket.emit("sessionId", sessionId);
-  });
 
   socket.on("join", (sessionId: string) => {
     // Add the client to the session
@@ -78,6 +58,34 @@ io.on("connection", (socket: Socket) => {
       socket.to(sessionId).emit("videoStateChange", videoState);
     }
   });
+});
+
+// REST endpoints
+app.get("/sessions", (_, res) => {
+  res.json(sessions);
+});
+
+app.post("/create", (req, res) => {
+  const videoUrl = req.query.videoUrl;
+  const sessionName = req.query.name;
+  const sessionId = uuidv4();
+  const session: Session = {
+    id: sessionId,
+    name: String(sessionName),
+    videoUrl: String(videoUrl),
+    videoState: { isPlaying: false, progress: 0, timestamp: new Date() },
+  };
+  sessions.push(session);
+  res.status(201).send({ sessionId });
+});
+
+app.get("/watch/:id", (req, res) => {
+  const session = sessions.find((session) => session.id === req.params.id);
+  if (session) {
+    res.status(200).send(session);
+  } else {
+    res.status(404).send({ message: "Session not found" });
+  }
 });
 
 httpServer.listen(PORT, () => {
