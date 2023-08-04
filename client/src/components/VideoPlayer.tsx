@@ -20,6 +20,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   const [hasJoined, setHasJoined] = useState(false);
   const [isReady, setIsReady] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [progress, setProgress] = useState(0);
   const player = useRef<ReactPlayer>(null);
 
   const handleReady = () => {
@@ -30,17 +31,9 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     console.log("Video ended");
   };
 
-  const handleSeek = (seconds: number) => {
-    // Ideally, the seek event would be fired whenever the user moves the built in Youtube video slider to a new timestamp.
-    // However, the youtube API no longer supports seek events (https://github.com/cookpete/react-player/issues/356), so this no longer works
-
-    // You'll need to find a different way to detect seeks (or just write your own seek slider and replace the built in Youtube one.)
-    // Note that when you move the slider, you still get play, pause, buffer, and progress events, can you use those?
-
-    console.log(
-      "This never prints because seek decetion doesn't work: ",
-      seconds
-    );
+  const handleSeek = (timestamp: number) => {
+    console.log("User sought to: ", timestamp);
+    socket.emit("userSeek", sessionId, timestamp);
   };
 
   const handlePlay = () => {
@@ -68,6 +61,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     loadedSeconds: number;
   }) => {
     console.log("Video progress: ", state);
+    setProgress(state.playedSeconds);
   };
 
   useEffect(() => {
@@ -94,8 +88,6 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
       socket.off("seek");
     };
   }, [socket]);
-
-  console.log(isPlaying);
 
   return (
     <Box
@@ -131,7 +123,8 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
         <VideoOverlay
           playing={isPlaying}
           setPlaying={setIsPlaying}
-          progress={player.current?.getCurrentTime() || 0}
+          progress={progress}
+          setProgress={setProgress}
           onPause={handlePause}
           onPlay={handlePlay}
           onSeek={handleSeek}

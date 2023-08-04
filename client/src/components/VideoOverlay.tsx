@@ -4,6 +4,7 @@ interface VideoOverlayProps {
   playing: boolean;
   setPlaying: (playing: boolean) => void;
   progress: number;
+  setProgress: (progress: number) => void;
   onPlay: () => void;
   onPause: () => void;
   onSeek: (seconds: number) => void;
@@ -15,6 +16,7 @@ const VideoOverlay: React.FC<VideoOverlayProps> = ({
   playing,
   setPlaying,
   progress,
+  setProgress,
   onPlay,
   onPause,
   onSeek,
@@ -37,9 +39,11 @@ const VideoOverlay: React.FC<VideoOverlayProps> = ({
 
   const handleSeek = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
-      onSeek(parseFloat(event.target.value));
+      const value = parseFloat(event.target.value);
+      setProgress(value);
+      onSeek(value);
     },
-    [onSeek]
+    [onSeek, setProgress]
   );
 
   useEffect(() => {
@@ -61,6 +65,8 @@ const VideoOverlay: React.FC<VideoOverlayProps> = ({
         min="0"
         max={videoLength}
         onChange={handleSeek}
+        value={progress}
+        onClick={(event) => event.stopPropagation()}
       />
       <p style={styles.time}>{videoLength} seconds</p>
     </div>

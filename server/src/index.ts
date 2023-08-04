@@ -67,7 +67,7 @@ io.on("connection", (socket: Socket) => {
     }
   });
 
-  socket.on("seek", (sessionId: string, timestamp: number) => {
+  socket.on("userSeek", (sessionId: string, timestamp: number) => {
     const session = sessions.find((session) => session.id === sessionId);
     if (session) {
       // Update the video state
