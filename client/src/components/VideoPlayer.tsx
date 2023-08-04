@@ -1,22 +1,24 @@
 import { Box, Button } from "@mui/material";
 import React, { useEffect, useRef, useState } from "react";
 import ReactPlayer from "react-player";
-import { Socket, io } from "socket.io-client";
-import { VideoState } from "../../../shared/types";
+import { Socket } from "socket.io-client";
 
 interface VideoPlayerProps {
   url: string;
   hideControls?: boolean;
   socket: Socket;
+  sessionId?: string;
 }
 
 const VideoPlayer: React.FC<VideoPlayerProps> = ({
   url,
   hideControls,
   socket,
+  sessionId,
 }) => {
   const [hasJoined, setHasJoined] = useState(false);
   const [isReady, setIsReady] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
   const player = useRef<ReactPlayer>(null);
 
   const handleReady = () => {
@@ -41,17 +43,15 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   };
 
   const handlePlay = () => {
-    console.log(
-      "User played video at time: ",
-      player.current?.getCurrentTime()
-    );
+    const time = player.current?.getCurrentTime();
+    console.log("User played video at time: ", time);
+    socket.emit("userPlay", sessionId, time);
   };
 
   const handlePause = () => {
-    console.log(
-      "User paused video at time: ",
-      player.current?.getCurrentTime()
-    );
+    const time = player.current?.getCurrentTime();
+    console.log("User paused video at time: ", time);
+    socket.emit("userPause", sessionId, time);
   };
 
   const handleBuffer = () => {
@@ -68,16 +68,31 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   };
 
   useEffect(() => {
-    socket.on("videoStateChange", (videoState: VideoState) => {
-      console.log("Video State changed!", videoState);
-      // Update player state here
+    socket.on("play", (time: number) => {
+      console.log("Playing video at time: ", time);
+      player.current?.seekTo(time);
+      setIsPlaying(true);
     });
 
-    // Cleanup on unmount
+    socket.on("pause", (time: number) => {
+      console.log("Pausing video at time: ", time);
+      player.current?.seekTo(time);
+      setIsPlaying(false);
+    });
+
+    socket.on("seek", (time: number) => {
+      console.log("Seeking video to time: ", time);
+      player.current?.seekTo(time);
+    });
+
     return () => {
-      socket.disconnect();
+      socket.off("play");
+      socket.off("pause");
+      socket.off("seek");
     };
-  }, []);
+  }, [socket]);
+
+  console.log(isPlaying);
 
   return (
     <Box
@@ -97,7 +112,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
         <ReactPlayer
           ref={player}
           url={url}
-          playing={hasJoined}
+          playing={hasJoined && isPlaying}
           controls={!hideControls}
           onReady={handleReady}
           onEnded={handleEnd}

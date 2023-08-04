@@ -3,23 +3,25 @@ import { Server, Socket } from "socket.io";
 import { createServer } from "http";
 import cors from "cors";
 import { v4 as uuidv4 } from "uuid";
-import { Session, VideoState } from "../../shared/Types";
+import { Session } from "../../shared/Types";
 
 const PORT = 5000;
 
 // Express server setup
 const app = express();
-app.use(cors());
 app.use(express.json());
+app.use(cors());
 
 const httpServer = createServer(app);
-const options = {}; // additional options if needed
+const options = {
+  cors: { origin: "http://localhost:3000", methods: ["GET", "POST"] },
+};
 const io = new Server(httpServer, options);
 
 let sessions: Session[] = [];
 
 io.on("connection", (socket: Socket) => {
-  console.log("New client connected");
+  console.log("New client connected", socket.id);
 
   socket.on("join", (sessionId: string) => {
     // Add the client to the session
@@ -38,13 +40,38 @@ io.on("connection", (socket: Socket) => {
     console.log(`User left session: ${sessionId}`);
   });
 
-  socket.on("videoStateChange", (sessionId: string, videoState: VideoState) => {
+  socket.on("userPlay", (sessionId: string, timestamp: number) => {
+    const session = sessions.find((session) => session.id === sessionId);
+    if (session) {
+      session.videoState = {
+        ...session.videoState,
+        isPlaying: true,
+        progress: timestamp,
+      };
+      socket.to(sessionId).emit("play", timestamp, socket.id);
+    }
+  });
+
+  socket.on("userPause", (sessionId: string, timestamp: number) => {
     const session = sessions.find((session) => session.id === sessionId);
     if (session) {
       // Update the video state
-      session.videoState = videoState;
+      session.videoState = {
+        ...session.videoState,
+        isPlaying: false,
+        progress: timestamp,
+      };
+      socket.to(sessionId).emit("pause", timestamp, socket.id);
+    }
+  });
+
+  socket.on("seek", (sessionId: string, timestamp: number) => {
+    const session = sessions.find((session) => session.id === sessionId);
+    if (session) {
+      // Update the video state
+      session.videoState = { ...session.videoState, progress: timestamp };
       // Send the updated video state to all clients in the session except the sender
-      socket.to(sessionId).emit("videoStateChange", videoState);
+      socket.to(sessionId).emit("seek", timestamp, socket.id);
     }
   });
 });
@@ -62,7 +89,7 @@ app.post("/create", (req, res) => {
     id: sessionId,
     name: String(sessionName),
     videoUrl: String(videoUrl),
-    videoState: { isPlaying: false, progress: 0, timestamp: new Date() },
+    videoState: { isPlaying: false, progress: 0 },
   };
   sessions.push(session);
   res.status(201).send({ sessionId });

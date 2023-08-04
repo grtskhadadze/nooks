@@ -91,7 +91,11 @@ const WatchSession: React.FC = () => {
             </Button>
           </Tooltip>
         </Box>
-        <VideoPlayer url={session.videoUrl} socket={socket} />
+        <VideoPlayer
+          url={session.videoUrl}
+          socket={socket}
+          sessionId={sessionId}
+        />
       </>
     );
   }

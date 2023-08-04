@@ -1,7 +1,6 @@
 export interface VideoState {
   isPlaying: boolean;
   progress: number;
-  timestamp: Date;
 }
 
 export interface Session {
