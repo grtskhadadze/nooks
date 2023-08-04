@@ -66,7 +66,7 @@ const WatchSession: React.FC = () => {
             </Button>
           </Tooltip>
         </Box>
-        <VideoPlayer url={url} />;
+        <VideoPlayer url={url} />
       </>
     );
   }
