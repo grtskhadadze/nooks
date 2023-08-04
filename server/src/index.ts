@@ -3,29 +3,18 @@ import { Server, Socket } from "socket.io";
 import { createServer } from "http";
 import cors from "cors";
 import { v4 as uuidv4 } from "uuid";
+import { Session, VideoState } from "../../shared/Types";
 
 const PORT = 5000;
 
 // Express server setup
 const app = express();
 app.use(cors());
+app.use(express.json());
 
 const httpServer = createServer(app);
 const options = {}; // additional options if needed
 const io = new Server(httpServer, options);
-
-interface VideoState {
-  isPlaying: boolean;
-  progress: number;
-  timestamp: Date;
-}
-
-interface Session {
-  id: string;
-  name: string;
-  videoUrl: string;
-  videoState: VideoState;
-}
 
 let sessions: Session[] = [];
 
@@ -66,8 +55,8 @@ app.get("/sessions", (_, res) => {
 });
 
 app.post("/create", (req, res) => {
-  const videoUrl = req.query.videoUrl;
-  const sessionName = req.query.name;
+  const videoUrl = req.body.videoUrl;
+  const sessionName = req.body.name;
   const sessionId = uuidv4();
   const session: Session = {
     id: sessionId,
