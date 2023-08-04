@@ -1,13 +1,20 @@
 import { Box, Button } from "@mui/material";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import ReactPlayer from "react-player";
+import { Socket, io } from "socket.io-client";
+import { VideoState } from "../../../shared/types";
 
 interface VideoPlayerProps {
   url: string;
   hideControls?: boolean;
+  socket: Socket;
 }
 
-const VideoPlayer: React.FC<VideoPlayerProps> = ({ url, hideControls }) => {
+const VideoPlayer: React.FC<VideoPlayerProps> = ({
+  url,
+  hideControls,
+  socket,
+}) => {
   const [hasJoined, setHasJoined] = useState(false);
   const [isReady, setIsReady] = useState(false);
   const player = useRef<ReactPlayer>(null);
@@ -60,6 +67,18 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ url, hideControls }) => {
     console.log("Video progress: ", state);
   };
 
+  useEffect(() => {
+    socket.on("videoStateChange", (videoState: VideoState) => {
+      console.log("Video State changed!", videoState);
+      // Update player state here
+    });
+
+    // Cleanup on unmount
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
+
   return (
     <Box
       width="100%"
@@ -101,7 +120,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ url, hideControls }) => {
           size="large"
           onClick={() => setHasJoined(true)}
         >
-          Watch Session
+          Start Watching
         </Button>
       )}
     </Box>

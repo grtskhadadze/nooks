@@ -69,9 +69,10 @@ app.post("/create", (req, res) => {
 });
 
 app.get("/watch/:id", (req, res) => {
+  console.log(req.params.id);
   const session = sessions.find((session) => session.id === req.params.id);
   if (session) {
-    res.status(200).send(session);
+    res.status(200).json(session);
   } else {
     res.status(404).send({ message: "Session not found" });
   }

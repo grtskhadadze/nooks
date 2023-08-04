@@ -1,25 +1,50 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import VideoPlayer from "../components/VideoPlayer";
 import { useNavigate, useParams } from "react-router-dom";
 import { Box, Button, TextField, Tooltip } from "@mui/material";
 import LinkIcon from "@mui/icons-material/Link";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
+import { io } from "socket.io-client";
+import { Session } from "../../../shared/types";
 
 const WatchSession: React.FC = () => {
   const { sessionId } = useParams();
   const navigate = useNavigate();
-  const [url, setUrl] = useState<string | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
 
   const [linkCopied, setLinkCopied] = useState(false);
 
+  const socket = useMemo(() => {
+    return io("http://localhost:5000");
+  }, []);
+
+  const getSession = useCallback(async () => {
+    try {
+      const response = await fetch(`http://localhost:5000/watch/${sessionId}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.status === 404) throw new Error("Session not found");
+
+      const data = await response.json();
+
+      setSession(data);
+
+      socket.emit("join", sessionId);
+    } catch (err) {
+      console.error("Failed to get session:", err);
+      navigate("/create");
+    }
+  }, [sessionId, navigate, socket]);
+
   useEffect(() => {
-    // load video by session ID -- right now we just hardcode a constant video but you should be able to load the video associated with the session
-    setUrl("https://www.youtube.com/watch?v=NX1eKLReSpY");
+    getSession();
+  }, [getSession]);
 
-    // if session ID doesn't exist, you'll probably want to redirect back to the home / create session page
-  }, [sessionId]);
-
-  if (!!url) {
+  if (!!session?.videoUrl) {
     return (
       <>
         <Box
@@ -33,7 +58,7 @@ const WatchSession: React.FC = () => {
           <TextField
             label="Youtube URL"
             variant="outlined"
-            value={url}
+            value={session.videoUrl}
             inputProps={{
               readOnly: true,
               disabled: true,
@@ -66,7 +91,7 @@ const WatchSession: React.FC = () => {
             </Button>
           </Tooltip>
         </Box>
-        <VideoPlayer url={url} />
+        <VideoPlayer url={session.videoUrl} socket={socket} />
       </>
     );
   }
