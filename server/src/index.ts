@@ -9,8 +9,8 @@ const PORT = 5000;
 
 // Express server setup
 const app = express();
-app.use(express.json());
 app.use(cors());
+app.use(express.json());
 
 const httpServer = createServer(app);
 const options = {
@@ -48,7 +48,8 @@ io.on("connection", (socket: Socket) => {
         isPlaying: true,
         progress: timestamp,
       };
-      socket.to(sessionId).emit("play", timestamp, socket.id);
+      socket.to(sessionId).emit("play", timestamp);
+      socket.emit("play", timestamp);
     }
   });
 
@@ -61,7 +62,8 @@ io.on("connection", (socket: Socket) => {
         isPlaying: false,
         progress: timestamp,
       };
-      socket.to(sessionId).emit("pause", timestamp, socket.id);
+      socket.to(sessionId).emit("pause", timestamp);
+      socket.emit("pause", timestamp);
     }
   });
 
@@ -71,7 +73,8 @@ io.on("connection", (socket: Socket) => {
       // Update the video state
       session.videoState = { ...session.videoState, progress: timestamp };
       // Send the updated video state to all clients in the session except the sender
-      socket.to(sessionId).emit("seek", timestamp, socket.id);
+      socket.to(sessionId).emit("seek", timestamp);
+      socket.emit("seek", timestamp);
     }
   });
 });

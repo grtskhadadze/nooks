@@ -95,6 +95,7 @@ const WatchSession: React.FC = () => {
           url={session.videoUrl}
           socket={socket}
           sessionId={sessionId}
+          hideControls={true}
         />
       </>
     );
