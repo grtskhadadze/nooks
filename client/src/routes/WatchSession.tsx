@@ -6,6 +6,7 @@ import LinkIcon from "@mui/icons-material/Link";
 import CancelIcon from "@mui/icons-material/Cancel";
 import { io } from "socket.io-client";
 import { Session } from "../../../shared/types";
+import ReactPlayer from "react-player";
 
 const WatchSession: React.FC = () => {
   const { sessionId } = useParams();
@@ -33,6 +34,9 @@ const WatchSession: React.FC = () => {
 
       setSession(data);
       document.title = data?.name || "Watch Party";
+      if (!ReactPlayer.canPlay(data?.videoUrl)) {
+        throw new Error("Invalid video URL");
+      }
 
       socket.emit("join", sessionId);
     } catch (err) {
