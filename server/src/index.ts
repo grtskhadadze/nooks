@@ -35,6 +35,7 @@ io.on("connection", (socket: Socket) => {
   });
 
   socket.on("userPlay", (sessionId: string, timestamp: number) => {
+    // Triggered when a user hits play
     const session = sessions.find((session) => session.id === sessionId);
     if (session) {
       // Update the video state
@@ -45,7 +46,7 @@ io.on("connection", (socket: Socket) => {
       };
       // This sends the updated video state to all clients in the session except the sender
       socket.to(sessionId).emit("play", timestamp);
-      // Send to the sender too
+      // Send to the sender too. This is done for better synchronicity
       socket.emit("play", timestamp);
     }
   });
@@ -73,6 +74,7 @@ io.on("connection", (socket: Socket) => {
   });
 
   socket.on("progress", (sessionId: string, progress: number) => {
+    // This is unnecessary but it's better to keep the video state in sync for future use
     const session = sessions.find((session) => session.id === sessionId);
     if (session) {
       session.videoState = { ...session.videoState, progress };
@@ -80,6 +82,8 @@ io.on("connection", (socket: Socket) => {
   });
 
   socket.on("startWatching", (sessionId: string) => {
+    // This is for latecomers. When a user joins a session, sync is triggered.
+    // On sync the existing viewers will send out a seek event with their timestamp
     const session = sessions.find((session) => session.id === sessionId);
     if (session) {
       socket.to(sessionId).emit("sync");
@@ -89,6 +93,7 @@ io.on("connection", (socket: Socket) => {
 
 // REST endpoints
 app.get("/sessions", (_, res) => {
+  // get all sessions for the list. Easier access to rooms
   res.json(sessions);
 });
 

@@ -43,14 +43,12 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     const time = player.current?.getCurrentTime();
     console.log("User played video at time: ", time);
     socket.emit("userPlay", sessionId, time);
-    // setIsPlaying(true);
   };
 
   const handlePause = () => {
     const time = player.current?.getCurrentTime();
     console.log("User paused video at time: ", time);
     socket.emit("userPause", sessionId, time);
-    // setIsPlaying(false);
   };
 
   const handleBuffer = () => {
@@ -121,8 +119,6 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
           onReady={handleReady}
           onEnded={handleEnd}
           onSeek={handleSeek}
-          // onPlay={handlePlay}
-          // onPause={handlePause}
           onBuffer={handleBuffer}
           onProgress={handleProgress}
           width="100%"
