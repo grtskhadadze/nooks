@@ -1,5 +1,5 @@
 import { Box, Button } from "@mui/material";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import ReactPlayer from "react-player";
 import { Socket } from "socket.io-client";
 import VideoOverlay from "./VideoOverlay";
@@ -31,10 +31,13 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     console.log("Video ended");
   };
 
-  const handleSeek = (timestamp: number) => {
-    console.log("User sought to: ", timestamp);
-    socket.emit("userSeek", sessionId, timestamp);
-  };
+  const handleSeek = useCallback(
+    (timestamp: number) => {
+      console.log("User sought to: ", timestamp);
+      socket.emit("userSeek", sessionId, timestamp);
+    },
+    [sessionId, socket]
+  );
 
   const handlePlay = () => {
     const time = player.current?.getCurrentTime();
@@ -108,7 +111,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
         width="100%"
         height="100%"
         display={hasJoined ? "flex" : "none"}
-        flexDirection="column"
+        position={"relative"}
       >
         <ReactPlayer
           ref={player}
@@ -135,7 +138,6 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
           onPlay={handlePlay}
           onSeek={handleSeek}
           videoLength={player.current?.getDuration() || 0}
-          videoTitle={"title"}
         />
       </Box>
       {!hasJoined && isReady && (

@@ -1,4 +1,7 @@
+import { Box, IconButton, Slider } from "@mui/material";
 import React, { useCallback, useEffect } from "react";
+import PauseIcon from "@mui/icons-material/Pause";
+import PlayIcon from "@mui/icons-material/PlayArrow";
 
 interface VideoOverlayProps {
   playing: boolean;
@@ -8,7 +11,6 @@ interface VideoOverlayProps {
   onPlay: () => void;
   onPause: () => void;
   onSeek: (seconds: number) => void;
-  videoTitle: string;
   videoLength: number;
 }
 
@@ -20,7 +22,6 @@ const VideoOverlay: React.FC<VideoOverlayProps> = ({
   onPlay,
   onPause,
   onSeek,
-  videoTitle,
   videoLength,
 }) => {
   const handleToggle = useCallback(() => {
@@ -38,13 +39,21 @@ const VideoOverlay: React.FC<VideoOverlayProps> = ({
   );
 
   const handleSeek = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      const value = parseFloat(event.target.value);
-      setProgress(value);
-      onSeek(value);
+    (_: Event, value: number | number[], __: number) => {
+      setProgress(value as number);
+      onSeek(value as number);
     },
     [onSeek, setProgress]
   );
+
+  const formatTime = useCallback((seconds: number) => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${hours}:${minutes / 10 < 1 ? "0" : ""}${minutes}:${
+      secs / 10 < 1 ? "0" : ""
+    }${secs}`;
+  }, []);
 
   useEffect(() => {
     document.addEventListener("keydown", handleSpacebar);
@@ -52,24 +61,27 @@ const VideoOverlay: React.FC<VideoOverlayProps> = ({
       document.removeEventListener("keydown", handleSpacebar);
     };
   }, [playing, handleSpacebar]);
+  console.log(progress);
 
   return (
-    <div style={styles.overlay} onClick={handleToggle}>
-      <button style={styles.button} onClick={handleToggle}>
-        {playing ? "Pause" : "Play"}
-      </button>
-      <h2 style={styles.title}>{videoTitle}</h2>
-      <input
+    <Box style={styles.overlay} onClick={handleToggle}>
+      <Slider
         style={styles.seeker}
-        type="range"
-        min="0"
+        min={0}
         max={videoLength}
         onChange={handleSeek}
         value={progress}
         onClick={(event) => event.stopPropagation()}
       />
-      <p style={styles.time}>{videoLength} seconds</p>
-    </div>
+      <Box style={styles.bottomPanel}>
+        <IconButton style={styles.button} onClick={handleToggle}>
+          {playing ? <PauseIcon /> : <PlayIcon />}
+        </IconButton>
+        <p style={styles.time}>
+          {formatTime(progress)} / {formatTime(videoLength)}
+        </p>
+      </Box>
+    </Box>
   );
 };
 
@@ -84,10 +96,14 @@ const styles: { [key: string]: React.CSSProperties } = {
     height: "100%",
     display: "flex",
     flexDirection: "column",
-    justifyContent: "center",
+    justifyContent: "end",
     alignItems: "center",
-    background:
-      "linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.5)",
+    background: "linear-gradient(rgba(0, 0, 0, 0) 70%, rgba(0, 0, 0, 0.7) 90%",
+  },
+  bottomPanel: {
+    width: "80%",
+    display: "flex",
+    flexDirection: "row",
   },
   button: {
     fontSize: "1.5rem",
@@ -103,6 +119,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     margin: "1rem 0",
   },
   time: {
+    marginLeft: "auto",
     color: "#fff",
   },
 };

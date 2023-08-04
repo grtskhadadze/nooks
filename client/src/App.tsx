@@ -21,6 +21,7 @@ const App = () => {
         alignItems="center"
         justifyContent="center"
         gap={1}
+        overflow={"hidden"}
       >
         <Routes>
           <Route path="/" element={<CreateSession />} />

@@ -3,7 +3,7 @@ import VideoPlayer from "../components/VideoPlayer";
 import { useNavigate, useParams } from "react-router-dom";
 import { Box, Button, TextField, Tooltip } from "@mui/material";
 import LinkIcon from "@mui/icons-material/Link";
-import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
+import CancelIcon from "@mui/icons-material/Cancel";
 import { io } from "socket.io-client";
 import { Session } from "../../../shared/types";
 
@@ -32,6 +32,7 @@ const WatchSession: React.FC = () => {
       const data = await response.json();
 
       setSession(data);
+      document.title = data?.name || "Watch Party";
 
       socket.emit("join", sessionId);
     } catch (err) {
@@ -79,15 +80,16 @@ const WatchSession: React.FC = () => {
               <LinkIcon />
             </Button>
           </Tooltip>
-          <Tooltip title="Create new watch party">
+          <Tooltip title="Leave This Watch Party">
             <Button
               onClick={() => {
                 navigate("/create");
               }}
               variant="contained"
               sx={{ whiteSpace: "nowrap", minWidth: "max-content" }}
+              color="error"
             >
-              <AddCircleOutlineIcon />
+              <CancelIcon />
             </Button>
           </Tooltip>
         </Box>
