@@ -83,6 +83,7 @@ const WatchSession: React.FC = () => {
           <Tooltip title="Leave This Watch Party">
             <Button
               onClick={() => {
+                socket.emit("leave", sessionId);
                 navigate("/create");
               }}
               variant="contained"

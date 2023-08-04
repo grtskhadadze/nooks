@@ -62,6 +62,8 @@ const CreateSession: React.FC = () => {
 
   useEffect(() => {
     getSessions();
+    // retitle when leaving session
+    document.title = "Youtube Watch Party";
   }, [getSessions]);
 
   return (
